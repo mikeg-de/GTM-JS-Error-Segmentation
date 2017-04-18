@@ -6,6 +6,7 @@
 		jsSegment = undefined, // Used for event action to segment types of javascripts independent from error message and transplation
 		jsErrorMsg = {{Error Message}},
 		jsErrorUrl = {{Error URL}},
+        //scriptDomain = !(jsErrorUrl) ? jsErrorUrl.match(/\b((xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}\b/i)[0] : undefined,
         scriptDomain = jsErrorUrl.match(/\b((xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}\b/i)[0],
         origin = undefined, // Used for event category to distinguish same or cross origin issues
         jsErrorRegEx = ["Line 0\: Script error",
@@ -34,18 +35,36 @@
 		],
 		jsErrorMsgType = undefined; // Used to match regEx with error type
 
-    if (documentDomain == scriptDomain) {
+    switch (true) {
+      case (documentDomain == scriptDomain):
+		origin = "Same-Origin";
+        break;
+      case (new RegExp(documentDomain.replace(/^www\./,''), "i").test(scriptDomain)):
+        origin = "Sub-Domain";
+        break;
+      case (scriptDomain == undefined):
+        origin = "Script file not found";
+        break;
+      default:
+		origin = "X-Origin";
+    }
+
+
+/*    if (documentDomain == scriptDomain) {
 		origin = 'Same-Origin';
 	} else if (new RegExp(documentDomain.replace(/^www\./,''), "i").test(scriptDomain)) {
         origin = 'Sub-Domain';
+    } else if (scriptDomain == undefined) {
+        origin = 'Script file not found';
     } else {
 		origin = 'X-Origin';
 	}
+*/
 
 	function jsErrorSegmenting() {
 		for (i = 0; i < jsErrorRegEx.length; i++) {
             //console.log("i: "+ i);
-			if (new RegExp(jsErrorRegEx[i], "i").test(jsErrorMsg) == true) {
+			if (new RegExp(jsErrorRegEx[i], "i").test(jsErrorMsg) === true) {
 				//console.log("Succesfull RegExp: " + new RegExp(jsErrorRegEx[i], "i"));
                 i++;
                 return jsErrorMsgType = i;
